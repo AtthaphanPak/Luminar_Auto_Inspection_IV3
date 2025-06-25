@@ -4,16 +4,11 @@ from Logic.operation_handler import is_valid_serial
 
 class InstructionWindow(QDialog):
      
-    def __init__(self, index=0, operationlist=None):
+    def __init__(self, index=0):
         super().__init__()
 
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Instructions_GUI.ui", self)
         self.mode = "Production"
-
-        if operationlist is None:
-            operationlist = []
-        
-        self.OperationValue.addItems(operationlist)
         
         self.stackedWidget.setCurrentIndex(index)
 
@@ -21,15 +16,12 @@ class InstructionWindow(QDialog):
 
         self.LogoutButton.clicked.connect(self.logout)
         self.ApplyButton.clicked.connect(self.Insert_clicked)
-        self.ActFailButton.clicked.connect(self.retest_instruction_process)
-        self.ActPassButton.clicked.connect(self.retest_instruction_process)
-        self.ModeButton.connect(self.select_mode)
+        self.ActionButton.clicked.connect(self.retest_instruction_process)
+        self.ModeButton.clicked.connect(self.select_mode)
         
     def Insert_clicked(self):
         self.serial_value = self.SerialValue.text()
         if is_valid_serial(self.serial_value):
-            self.operation_choice = self.OperationValue.currentText()
-            self.selected_type = self.TypeValue.currentText()
             self.accept()
         
         else:

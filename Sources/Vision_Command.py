@@ -13,7 +13,7 @@ def send_command(IP: str, PORT: int, command: str, wait=0.1):
         return f"TCP Error: {e}"   
     
 # serial = "600403008A2504C2027267"
-# HOST_IP = "169.254.148.226"
+# HOST_IP = "192.168.0.101"
 # PORT = 8500
 # response = send_command(HOST_IP, PORT, 'T2\r')
 

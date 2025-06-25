@@ -2,7 +2,7 @@ def  load_operation_list(operation_raw: str):
     return [op.strip() for op in operation_raw.split(",") if op.strip()]
 
 def is_valid_serial(serial: str):
-    return len(serial) == 12
+    return len(serial) == 22
 
 def generate_csv(save_path, df: dict):
     import os, csv

@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QMessageBox
 from Login_window import LoginWindow
 from Instructions_window import InstructionWindow
 from SubPart_window import SubPartWindow
-from Vision_Command import send_command, check_IV3_connection
+from Vision_Command import send_command
 from fitsdll import Convert_Data, fn_Handshake, fn_Log, fn_Query
 from Logic.operation_handler import generate_csv, upload_result_to_fits 
 
@@ -62,7 +62,7 @@ class MainAppWindow(QMainWindow):
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Main_GUI.ui", self)
 
         self.stackedWidget.setCurrentIndex(0)
-        self.LoadWeb.setZoomFactor(0.67)
+        self.LoadWeb.setZoomFactor(0.50)
 
         # action Button 
         self.PassButton.clicked.connect(self.open_result)
@@ -95,17 +95,17 @@ class MainAppWindow(QMainWindow):
 
     def start_instruction_flow(self):
         # print("INSTRUCTION")
-        self.Instruction = InstructionWindow(index=0, operationlist=self.operationlist)
+        self.Instruction = InstructionWindow(index=0)
         if self.Instruction.exec() != QDialog.DialogCode.Accepted:
             # print("User Cancel")
             return
-        self.type = self.Instruction.selected_type
+        self.type = "N/A"
         
         if self.type == "LOGOUT":
             return self.logout()
         else:
             self.sn = self.Instruction.serial_value
-            self.operation = self.Instruction.operation_choice
+            self.operation = self.operationlist[0]
             self.mode = self.Instruction.mode
 
             if self.mode.upper() == "PRODUCTION":
@@ -122,6 +122,10 @@ class MainAppWindow(QMainWindow):
             os.makedirs(self.retries_path, exist_ok=True)
 
             self.subserial = SubPartWindow()
+            
+            if self.subserial.exec() != QDialog.DialogCode.Accepted:
+                return
+
             self.df_subpart = self.subserial.sub_serial
 
             self.serialDisplay.setText(self.sn)

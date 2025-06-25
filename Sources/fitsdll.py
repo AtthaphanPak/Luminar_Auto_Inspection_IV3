@@ -86,5 +86,5 @@ def fn_FitsDebugging():
 
     return output
 
-s = fn_Query("*", "S500", "60064300102351C2000006", "WO#")
-print(s)
+# s = fn_Query("*", "S500", "60064300102351C2000006", "WO#")
+# print(s)
