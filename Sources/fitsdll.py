@@ -53,8 +53,7 @@ def fn_Query(model : str, operation : str, serial : str, query_parameters : str)
         for param in query_parameters.split(';'):
             fn_query = lib.fn_query(f"{model}",f"{operation}","2.10",f"{serial}",f"{param}",";")
             fn_query = str(fn_query)
-            query_values = fn_query.replace("-;","").replace(";-","").replace("-","")
-            query_array.append(query_values)
+            query_array.append(fn_query)
         query_result = ";".join(query_array)
         return query_result
     else:
@@ -86,3 +85,6 @@ def fn_FitsDebugging():
         output = "No valid log"
 
     return output
+
+s = fn_Query("*", "S500", "60064300102351C2000006", "WO#")
+print(s)

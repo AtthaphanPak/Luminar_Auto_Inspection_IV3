@@ -1,24 +1,35 @@
 from PyQt6 import uic
-from PyQt6.QtWidgets import QDialog
-from CloseEvent import ConfirmCloseMixin
+from PyQt6.QtWidgets import QDialog, QInputDialog, QComboBox, QMessageBox, QLineEdit
+from Logic.operation_handler import is_valid_serial
 
-class InstructionWindow(QDialog, ConfirmCloseMixin):
+class InstructionWindow(QDialog):
      
-    def __init__(self, index=0):
+    def __init__(self, index=0, operationlist=None):
         super().__init__()
+
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Instructions_GUI.ui", self)
+        self.mode = "Production"
+
+        if operationlist is None:
+            operationlist = []
+        
+        self.OperationValue.addItems(operationlist)
+        
         self.stackedWidget.setCurrentIndex(index)
+
+        self.SerialValue.setFocus()
 
         self.LogoutButton.clicked.connect(self.logout)
         self.ApplyButton.clicked.connect(self.Insert_clicked)
         self.ActFailButton.clicked.connect(self.retest_instruction_process)
         self.ActPassButton.clicked.connect(self.retest_instruction_process)
+        self.ModeButton.connect(self.select_mode)
         
-
     def Insert_clicked(self):
         self.serial_value = self.SerialValue.text()
-        if len(self.serial_value ) == 22:
-            self.selected_mode = self.ModeValue.currentText()
+        if is_valid_serial(self.serial_value):
+            self.operation_choice = self.OperationValue.currentText()
+            self.selected_type = self.TypeValue.currentText()
             self.accept()
         
         else:
@@ -28,6 +39,19 @@ class InstructionWindow(QDialog, ConfirmCloseMixin):
     def retest_instruction_process(self):
         self.reject()
 
+    def select_mode(self):
+        password, ok = QInputDialog.getText(self, "Admin login", "Enter admin password:", QLineEdit.EchoMode.Password)
+        if ok and password == "Admin123":
+            mode_dialog = QInputDialog()
+            mode, ok2 = QInputDialog.getItem(self, "Select Mode", "Choose mode:",["Production", "Debug"], 0, False)
+            if ok2:
+                self.mode = mode
+        else:
+            QMessageBox.warning(self, "Asscess Denied", "Incorrect password.")
+
     def logout(self):
-        self.selected_mode = "LOGOUT"
+        self.selected_type = "LOGOUT"
         self.accept()
+
+    def closeEvent(self, event):
+        return event.ignore()

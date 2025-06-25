@@ -7,6 +7,9 @@ class LoginWindow(QDialog, ConfirmCloseMixin):
         super().__init__()
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Login_GUI.ui", self)
         
+        self.enLineEdit.setFocus()
+        self.enLineEdit.returnPressed.connect(self.LoginButton.click)
+
         self.LoginButton.clicked.connect(self.login_clicked)
         
     def login_clicked(self):
