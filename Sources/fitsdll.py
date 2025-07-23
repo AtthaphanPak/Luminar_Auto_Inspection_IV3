@@ -93,6 +93,3 @@ def fn_FitsDebugging():
         output = "No valid log"
 
     return output
-
-lib = Dispatch("FITSDLL.clsDB") 
-print(dir(lib))

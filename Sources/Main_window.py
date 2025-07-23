@@ -378,7 +378,7 @@ class MainAppWindow(QMainWindow):
         else: 
             data_dict["Final Result"] = "FAIL"
 
-        wo = fn_Query(self.model, self.operation, self.sn, "WO#")
+        wo = fn_Query(self.model, "S400A", self.sn, "WO#")
 
         fits_df = {
             "EN": self.en,
