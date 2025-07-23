@@ -6,9 +6,10 @@ class SubPartWindow(QDialog):
     def __init__(self):
         super().__init__()
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Sub-Part_window.ui", self)
-        
+        print(type(self.XCVR))
         self.XCVR.setFocus()
         self.XCVR.returnPressed.connect(self.PCBA.setFocus)
+        print("PCBA")
         self.PCBA.returnPressed.connect(self.Poly_Sensor.setFocus)
         self.Poly_Sensor.returnPressed.connect(self.Poly_MES.setFocus)
         self.Poly_MES.returnPressed.connect(self.Fold.setFocus)
@@ -16,6 +17,7 @@ class SubPartWindow(QDialog):
         self.LATM.returnPressed.connect(self.StartButton.click)
         
         self.StartButton.clicked.connect(self.Start_clicked)
+        self.LogoutButton.clicked.connect(self.logout)
         print("SubPartWindow")
         
     def Start_clicked(self):
@@ -29,6 +31,10 @@ class SubPartWindow(QDialog):
         }
         print(self.sub_serial)
         self.accept()
-       
+    
+    def logout(self):
+        self.sub_serial = "LOGOUT"
+        self.accept()
+        
     def closeEvent(self, event):
         return event.ignore()

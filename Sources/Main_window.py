@@ -122,6 +122,8 @@ class MainAppWindow(QMainWindow):
             os.makedirs(self.retries_path, exist_ok=True)
 
             self.subserial = SubPartWindow()
+            if self.subserial == "LOGOUT":
+                return self.logout()
             
             if self.subserial.exec() != QDialog.DialogCode.Accepted:
                 return
