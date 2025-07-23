@@ -11,14 +11,17 @@ def Convert_Data(array_value):
 def fn_Handshake(model : str, operation : str, serial : str):
     lib = Dispatch("FITSDLL.clsDB") 
 
-    fn_initDB = lib.fn_initDB(f"{model}",f"{operation}","2.10","dbLuminar")
+    fn_initDB = lib.fn_InitDB(f"{model}",f"{operation}","2.10","dbLuminar")
     if fn_initDB == "True":
-        fn_handshake = lib.fn_handshake(f"{model}",f"{operation}","2.10",f"{serial}")
+        fn_handshake = lib.fn_Handshake(f"{model}",f"{operation}","2.10",f"{serial}")
         if fn_handshake == "True":
+            lib.closeDB()
             return True
         else:
+            lib.closeDB()
             return fn_FitsDebugging()
     else:
+        lib.closeDB()
         return False
 
 def fn_Log(model : str, operation : str, parameters : str, values : str):
@@ -34,29 +37,34 @@ def fn_Log(model : str, operation : str, parameters : str, values : str):
     list_parameters["MC"] = os.environ['COMPUTERNAME']
     parameters = parameters + ";" + "Shift" + ";" + "MC"
     values =  values + ";" + list_parameters["Shift"] + ";" + list_parameters["MC"]
-    fn_initDB = lib.fn_initDB(f"{model}",f"{operation}","2.10","dbLuminar")
+    fn_initDB = lib.fn_InitDB(f"{model}",f"{operation}","2.10","dbLuminar")
     if fn_initDB == "True":
-        fn_log = lib.fn_log(f"{model}",f"{operation}","2.10",f"{parameters}",f"{values}",";")
+        fn_log = lib.fn_Log(f"{model}",f"{operation}","2.10",f"{parameters}",f"{values}",";")
         if fn_log == "True":
+            lib.closeDB()
             return True
         else:
+            lib.closeDB()
             return fn_FitsDebugging()
     else:
+        lib.closeDB()
         return False
 
 def fn_Query(model : str, operation : str, serial : str, query_parameters : str):
     lib = Dispatch("FITSDLL.clsDB")
     query_array = []
 
-    fn_initDB = lib.fn_initDB(f"{model}",f"{operation}","2.10","dbLuminar")
+    fn_initDB = lib.fn_InitDB(f"{model}",f"{operation}","2.10","dbLuminar")
     if fn_initDB == "True":
         for param in query_parameters.split(';'):
-            fn_query = lib.fn_query(f"{model}",f"{operation}","2.10",f"{serial}",f"{param}",";")
+            fn_query = lib.fn_Query(f"{model}",f"{operation}","2.10",f"{serial}",f"{param}",";")
             fn_query = str(fn_query)
             query_array.append(fn_query)
         query_result = ";".join(query_array)
+        lib.closeDB()
         return query_result
     else:
+        lib.closeDB()
         return False
     
 def fn_FitsDebugging():
@@ -86,5 +94,5 @@ def fn_FitsDebugging():
 
     return output
 
-# s = fn_Query("*", "S500", "60064300102351C2000006", "WO#")
-# print(s)
+lib = Dispatch("FITSDLL.clsDB") 
+print(dir(lib))

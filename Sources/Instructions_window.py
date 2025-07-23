@@ -8,8 +8,9 @@ class InstructionWindow(QDialog):
         super().__init__()
 
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Instructions_GUI.ui", self)
-        self.mode = "Production"
-        
+        self.mode = "PRODUCTION"
+        self.serial_value = ""
+
         self.stackedWidget.setCurrentIndex(index)
 
         self.SerialValue.setFocus()
@@ -42,7 +43,7 @@ class InstructionWindow(QDialog):
             QMessageBox.warning(self, "Asscess Denied", "Incorrect password.")
 
     def logout(self):
-        self.selected_type = "LOGOUT"
+        self.mode = "LOGOUT"
         self.accept()
 
     def closeEvent(self, event):

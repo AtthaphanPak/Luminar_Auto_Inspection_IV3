@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QMessageBox
 from Login_window import LoginWindow
 from Instructions_window import InstructionWindow
 from SubPart_window import SubPartWindow
-from Vision_Command import send_command
+from Vision_Command import send_command, check_IV3_connection
 from fitsdll import Convert_Data, fn_Handshake, fn_Log, fn_Query
 from Logic.operation_handler import generate_csv, upload_result_to_fits 
 
@@ -22,14 +22,16 @@ class MainAppWindow(QMainWindow):
         os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-software-rasterizer"
         self.exit_confirm_enabled = True
         self.config = configparser.ConfigParser()
+        pcname = os.environ['COMPUTERNAME']
+        print(pcname)
         try:
             self.config.read("C:\Projects\AOI_SCANNER\Properties\Config.ini")
             self.CAM1_IP = self.config["CAMERA"].get("CAMERA_1_IP", "")
             self.CAM1_PORT = int(self.config["CAMERA"].get("CAMERA_1_PORT", ""))
             self.CAM2_IP = self.config["CAMERA"].get("CAMERA_2_IP", "")
             self.CAM2_PORT = int(self.config["CAMERA"].get("CAMERA_2_PORT", ""))
-            self.model = self.config["DEFAULT"].get("MODEL", "")
-            self.operationlist = self.config["DEFAULT"].get("OPERATION", "").split(",")
+            self.model = self.config[pcname].get("MODEL", "")
+            self.operationlist = self.config[pcname].get("OPERATION", "").split(",")
             self.pathimage = self.config["DEFAULT"].get("ImagePath", "")
             self.LogPath = self.config["DEFAULT"].get("LogPath", "")
         except Exception as e:
@@ -38,31 +40,24 @@ class MainAppWindow(QMainWindow):
             quit()
 
         os.makedirs(self.LogPath, exist_ok=True)
-
-        folder_bin = os.path.join(self.pathimage, "bin")
-        os.makedirs(folder_bin, exist_ok=True)
-        excess_files = glob.glob(os.path.join(self.pathimage, "*.jpeg"))
-        if excess_files:
-            for flie in excess_files:
-                os.rename(flie, os.path.join(folder_bin, os.path.basename(flie)))
-
-        self.mode = ""
+        
+        self.clear_log()
+        
         self.en = ""
         self.operation = ""
         self.sn = ""
-        self.type = ""
         self.promname = ""
         self.serial_log_path = ""
         self.retries_path = ""
-        self.df_subpart = {}
         self.program_list = []
         self.program_index = 0
         self.All_Result = []
+        self.Result_images = []
 
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Main_GUI.ui", self)
 
         self.stackedWidget.setCurrentIndex(0)
-        self.LoadWeb.setZoomFactor(0.50)
+        self.LoadWeb.setZoomFactor(0.67)
 
         # action Button 
         self.PassButton.clicked.connect(self.open_result)
@@ -70,8 +65,46 @@ class MainAppWindow(QMainWindow):
         self.NextButton.clicked.connect(self.handle_next_button)
         self.LogoutButton.clicked.connect(self.logout)
 
+        self.check_required_camera_connction()
         QTimer.singleShot(100, self.start_login_flow)
-          
+
+    def clear_log(self):
+        self.result_image_list = []
+        self.result_txt_list = []
+        folder_bin = os.path.join(self.pathimage, "bin")
+        os.makedirs(folder_bin, exist_ok=True)
+        jpeg_files = glob.glob(os.path.join(self.pathimage, "*.jpeg"))
+        txt_files = glob.glob(os.path.join(self.pathimage, "*.txt"))
+        
+        excess_files = jpeg_files + txt_files
+        if excess_files:
+            for flie in excess_files:
+                os.rename(flie, os.path.join(folder_bin, os.path.basename(flie)))
+
+    def check_required_camera_connction(self):
+        operation_sections = self.operationlist
+        required_cameras = set()
+        for operation in operation_sections:
+            call_program_str = self.config[operation].get("CALL_PROGRAM", "{}")
+            try:
+                call_program_dict = json.loads (call_program_str)
+                for cam in call_program_dict.keys():
+                    required_cameras.add(int(cam))
+            except Exception as e:
+                QMessageBox.critical(self,"ERROR Program", f"Error paring CALL_PROGRAM {operation}: {e}")
+
+            errors = []
+            if 1 in required_cameras and not check_IV3_connection(self.CAM1_IP, self.CAM1_PORT):
+                errors.append(f"Cannot connect to CAMERA 1 {self.CAM1_IP})")
+            if 2 in required_cameras and not check_IV3_connection(self.CAM1_IP, self.CAM2_PORT):
+                errors.append(f"Cannot connect to CAMERA 2 {self.CAM2_IP})")            
+
+            if errors:
+                QMessageBox.critical(self, "Camera Connection Error", "\n".join(errors))
+                self.exit_confirm_enabled = False
+                QApplication.quit()
+                quit()
+
     def start_login_flow(self):
         # print("LOGIN")
         self.setEnabled(False)
@@ -84,34 +117,44 @@ class MainAppWindow(QMainWindow):
             quit() 
 
         self.en = self.login.user_input
-        self.enDisplay.setText(self.en)
             
         QTimer.singleShot(100, self.start_instruction_flow)
 
     def logout(self):
+        self.move_retries()
+        self.clear_log()
         self.Mainlabel.setText("Waiting . . .")
+        self.Operatio_ID.setText("")
         self.stackedWidget.setCurrentIndex(0)
         QTimer.singleShot(100, self.start_login_flow)
 
     def start_instruction_flow(self):
-        # print("INSTRUCTION")
+        print("INSTRUCTION")
         self.Instruction = InstructionWindow(index=0)
         if self.Instruction.exec() != QDialog.DialogCode.Accepted:
             # print("User Cancel")
             return
-        self.type = "N/A"
+        self.mode = self.Instruction.mode
         
-        if self.type == "LOGOUT":
+        if self.mode == "LOGOUT":
             return self.logout()
         else:
-            self.sn = self.Instruction.serial_value
-            self.operation = self.operationlist[0]
-            self.mode = self.Instruction.mode
-
+            sn = self.Instruction.serial_value
             if self.mode.upper() == "PRODUCTION":
-                handshake_status = fn_Handshake(self.model, self.operation, self.sn)
-                if handshake_status != True:
-                    QMessageBox.critical(self, "FITs Message", f"Handcheck FAIL Serial: {self.sn}")
+                for operation_choice in self.operationlist:
+                    print(self.model)
+                    print(operation_choice)
+                    print(sn)
+                    handshake_status = fn_Handshake(self.model, operation_choice, sn)
+                    print(handshake_status)
+                    if handshake_status == True:   
+                        self.operation = operation_choice
+                        self.Operatio_ID.setText(operation_choice)
+                        self.sn = sn
+                        self.mode = self.Instruction.mode
+                        break
+                else: 
+                    QMessageBox.critical(self, "Handcheck FAIL", f"Serial: {sn} has no test in this station.")
                     QTimer.singleShot(100, self.start_instruction_flow)
                     return
             
@@ -122,16 +165,17 @@ class MainAppWindow(QMainWindow):
             os.makedirs(self.retries_path, exist_ok=True)
 
             self.subserial = SubPartWindow()
-            if self.subserial == "LOGOUT":
-                return self.logout()
             
             if self.subserial.exec() != QDialog.DialogCode.Accepted:
                 return
 
             self.df_subpart = self.subserial.sub_serial
 
+            if self.df_subpart == "LOGOUT":
+                return self.logout()
+
+            self.enDisplay.setText(self.en)
             self.serialDisplay.setText(self.sn)
-            self.TypeDisplay.setText(self.type)
             self.StationDisplay.setText(self.operation)
             self.ModeDisplay.setText(self.mode)
             self.All_Result = []
@@ -139,11 +183,11 @@ class MainAppWindow(QMainWindow):
             QTimer.singleShot(100, self.operation_select)
     
     def operation_select(self):
-        # print("OPERATION")
+        print("OPERATION")
         self.PassButton.hide()
         self.NextButton.hide()
         self.RetryButton.hide()
-
+        print(self.operation)
         call_program = self.config[self.operation].get("CALL_PROGRAM", "{}")
         self.program_list = json.loads(call_program)
         # print(self.program_list)
@@ -151,7 +195,7 @@ class MainAppWindow(QMainWindow):
 
 
     def trigger_program_list(self):
-        # print("trigger_program_list")
+        print("trigger_program_list")
         self.program_pairs =[]
         for cam, prog_list in self.program_list.items():
             for prog in prog_list:
@@ -170,7 +214,6 @@ class MainAppWindow(QMainWindow):
 
     def trigger_current_program(self):
         if self.program_index < len(self.program_pairs):
-            print(self.program_pairs[self.program_index])
             camera, program = self.program_pairs[self.program_index]
             print(f"Trigger Camera: {camera} ---> program: {program}")
             self.start_trigger_flow()
@@ -180,26 +223,52 @@ class MainAppWindow(QMainWindow):
             self.PassButton.show()
 
     def handle_next_button(self):
-        ## เพิ่ม image ตรงนี้
+        camera, program = self.program_pairs[self.program_index]
+        jpeg_path, txt_path  = self.find_result_files(self.serial_log_path, program)
+        print("Save path:\t", jpeg_path)
+        self.Result_images.append(jpeg_path)
         self.NextButton.hide()
         self.program_index += 1
         self.trigger_current_program()
 
     def retries(self):
         # print("retries")
-        pattern = f"{self.sn}_*.jpeg"
-        retry_images = glob.glob(os.path.join(self.pathimage ,pattern))
-        if retry_images:
-            for retry_img in retry_images:
-                self.move_image(self.retries_path, retry_img)
+        pattern_base = os.path.join(self.pathimage, f"{self.sn}_")
+        
+        jpeg_files = glob.glob(pattern_base + "*.jpeg")
+        txt_files = glob.glob(pattern_base + "*.txt")
             
+        if jpeg_files:
+            latest_jpeg = max(jpeg_files, key=os.path.getmtime)
+            if latest_jpeg:
+                self.move_files(self.retries_path, latest_jpeg)
+     
+        if txt_files:
+            latest_txt = max(txt_files, key=os.path.getmtime)
+            if latest_txt:
+                self.move_files(self.retries_path, latest_txt)
+        
         self.start_trigger_flow()
+        
+    def move_retries(self):
+        pattern_base = os.path.join(self.pathimage, f"{self.sn}_")
+        
+        jpeg_files = glob.glob(pattern_base + "*.jpeg")
+        txt_files = glob.glob(pattern_base + "*.txt")
+            
+        if jpeg_files:
+            latest_jpeg = max(jpeg_files, key=os.path.getmtime)
+            if latest_jpeg:
+                self.move_files(self.retries_path, latest_jpeg)
+     
+        if txt_files:
+            latest_txt = max(txt_files, key=os.path.getmtime)
+            if latest_txt:
+                self.move_files(self.retries_path, latest_txt)        
     
     def start_trigger_flow(self):
         # print("TRIGGER")
         camera_num, program_num = self.program_pairs[self.program_index]
-        print("camera_num\t", camera_num)
-        print("program_num\t", program_num)
         if int(camera_num) == 1:
             IP = self.CAM1_IP
             PORT = self.CAM1_PORT
@@ -277,26 +346,31 @@ class MainAppWindow(QMainWindow):
     def open_result(self):
         # print("upload_result")
         self.setEnabled(False)
-
+        last_program = self.program_pairs[-1][1]
+        jpeg_path, txt_path = self.find_result_files(self.serial_log_path, last_program)
+        self.Result_images.append(jpeg_path)
+        
         data_dict = {
             "Operation": self.operation,
-            # "Program name": [],
+            "SN": self.sn,
             "Result": [],
+            "Score": [],
             "Image Path": [],
         }
-
+        
         for row in self.All_Result:
-            # print(row)
             now = datetime.now().strftime("%b%d%Y")
-            # image_num = "{:05d}".format(int(row.split(",")[2]) + 1)
-            program = row.split(",")[1]
-            final_result = row.split(",")[3].replace("OK", "PASS").replace("NOK", "FAIL").replace("--", "FAIL")
-            pattern = f"{self.sn}_*_{program}_*_{now}_*.jpeg"
-            img_path = self.find_result_img(pattern)
-
-            # data_dict["Program name"].append("Sta")
+            rowdata = row.split(",")
+            program = rowdata[1]
+            final_result = rowdata[3].replace("OK", "PASS").replace("NG", "FAIL").replace("--", "FAIL")
+            score_result = rowdata[9]
+           
             data_dict["Result"].append(final_result)
+            data_dict["Score"].append(score_result)
+            
+        for img_path in self.Result_images:
             data_dict["Image Path"].append(img_path)
+            print(img_path)
 
         
         if "Result" in data_dict and all(val == "PASS" for val in data_dict["Result"]):
@@ -327,8 +401,8 @@ class MainAppWindow(QMainWindow):
             else:
                 QMessageBox.critical(self, "Failed uploaded data to FITs", log_status)
                 
-
-        PassInstruction = InstructionWindow(index=1)
+        self.Result_images = []
+        PassInstruction = InstructionWindow(index=2)
         result = PassInstruction.exec()
         
         if result == QDialog.DialogCode.Accepted:
@@ -338,21 +412,31 @@ class MainAppWindow(QMainWindow):
 
         self.setEnabled(True)
 
-    def find_result_img(self, pattern: str):
-        files = glob.glob(os.path.join(self.pathimage ,pattern))
-        if not files:
-            return None
-        latest_file = max(files, key=os.path.getmtime)
-        return self.move_image(self.serial_log_path, latest_file)
+    def find_result_files(self, des_path, program_num: str):
+        now = datetime.now().strftime("%b%d%Y")
+        pattern_base = os.path.join(self.pathimage, f"{self.sn}_*_0{program_num}_*_{now}_")
+        print(pattern_base)
+        
+        jpeg_files = glob.glob(pattern_base + "*.jpeg")
+        latest_jpeg = max(jpeg_files, key=os.path.getmtime)
+        if latest_jpeg:
+            img_path = self.move_files(des_path, latest_jpeg)
+        
+        txt_files = glob.glob(pattern_base + "*.txt")
+        latest_txt = max(txt_files, key=os.path.getmtime)
+        if latest_txt:
+            txt_path = self.move_files(des_path, latest_txt)
+        
+        return img_path, txt_path
 
-    def move_image(self, path, target_pathfile):
+    def move_files(self, path, target_pathfile):
         des_path = os.path.join(path, os.path.basename(target_pathfile))
         try:
             os.rename(target_pathfile, des_path)
             return des_path
         except Exception as e:
             QMessageBox.warning(self, "Move file Error", e)
-            return ""
+            return None
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
