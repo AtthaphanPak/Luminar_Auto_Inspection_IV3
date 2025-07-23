@@ -17,7 +17,6 @@ def generate_csv(save_path, df: dict):
 def upload_result_to_fits(df):
     if df["Operation"] == "S500":
         return {
-            "Presence Top view": df["Result"][0],
-            "Image Top view": df["Image Path"][0],
+            "Top view": df["Image Path"][0],
             "Result": df["Final Result"]
         }
