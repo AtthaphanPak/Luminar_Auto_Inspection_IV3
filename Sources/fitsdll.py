@@ -93,3 +93,6 @@ def fn_FitsDebugging():
         output = "No valid log"
 
     return output
+
+# status = fn_Query("SCANNER", "S200A", "600643001B2502C2002024", "SN Polygon sensor")
+# print(status)

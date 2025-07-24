@@ -164,7 +164,7 @@ class MainAppWindow(QMainWindow):
             os.makedirs(self.serial_log_path, exist_ok=True)
             os.makedirs(self.retries_path, exist_ok=True)
 
-            self.subserial = SubPartWindow()
+            self.subserial = SubPartWindow(sn)
             
             if self.subserial.exec() != QDialog.DialogCode.Accepted:
                 return

@@ -1,15 +1,15 @@
 from PyQt6 import uic
 from PyQt6.QtWidgets import QDialog
 from CloseEvent import ConfirmCloseMixin
+from fitsdll import fn_Query
 
 class SubPartWindow(QDialog):
-    def __init__(self):
+    def __init__(self, serial):
+        self.sn = serial
         super().__init__()
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Sub-Part_window.ui", self)
-        print(type(self.XCVR))
         self.XCVR.setFocus()
         self.XCVR.returnPressed.connect(self.PCBA.setFocus)
-        print("PCBA")
         self.PCBA.returnPressed.connect(self.Poly_Sensor.setFocus)
         self.Poly_Sensor.returnPressed.connect(self.Poly_MES.setFocus)
         self.Poly_MES.returnPressed.connect(self.Fold.setFocus)
@@ -21,14 +21,55 @@ class SubPartWindow(QDialog):
         print("SubPartWindow")
         
     def Start_clicked(self):
-        self.sub_serial = {
-            "SN XCVR": self.XCVR.text(),
-            "SN PCBA": self.PCBA.text(),
-            "SN Polygon sensor": self.Poly_Sensor.text(),
-            "SN Polygon (MES Barcode)": self.Poly_MES.text(),
-            "SN Fold Mirror": self.Fold.text(),
-            "SN LATM": self.LATM.text()
-        }
+        self.sub_serial = {}
+        if fn_Query("SANNER", "S200A", self.sn, "SN  XCVR") == self.XCVR.text():
+            self.sub_serial["SN  XCVR"] = self.XCVR.text()
+        else:
+            self.Error_label.setStyleSheet("color: red;")
+            self.Error_label.setText("SN XCVR not correct")
+            self.XCVR.setText("")
+            return
+        
+        if fn_Query("SANNER", "S200A", self.sn, "SN PCBA") == self.PCBA.text():
+            self.sub_serial["SN PCBA"] = self.PCBA.text()
+        else:
+            self.Error_label.setStyleSheet("color: red;")
+            self.Error_label.setText("SN PCBA not correct")
+            self.PCBA.setText("")
+            return
+
+        if fn_Query("SANNER", "S200A", self.sn, "SN Polygon sensor") == self.Poly_Sensor.text():
+            self.sub_serial["SN Polygon sensor"] = self.Poly_Sensor.text()
+        else:
+            self.Error_label.setStyleSheet("color: red;")
+            self.Error_label.setText("SN Polygon sensor not correct")
+            self.Poly_Sensor.setText("")
+            return
+
+        if fn_Query("SANNER", "S300A", self.sn, "SN Polygon (MES Barcode)") == self.Poly_MES.text():
+            self.sub_serial["SN Polygon (MES Barcode)"] = self.Poly_MES.text()
+        else:
+            self.Error_label.setStyleSheet("color: red;")
+            self.Error_label.setText("SN Polygon (MES Barcode) not correct")
+            self.Poly_MES.setText("")
+            return
+
+        if fn_Query("SANNER", "S400A", self.sn, "SN Fold Mirror") == self.Fold.text():       
+            self.sub_serial["SN Fold Mirror"] = self.Fold.text()
+        else:
+            self.Error_label.setStyleSheet("color: red;")
+            self.Error_label.setText("SN Fold Mirror not correct")
+            self.Fold.setText("")
+            return
+
+        if fn_Query("SANNER", "S400A", self.sn, "SN LATM") == self.LATM.text():
+            self.sub_serial["SN LATM"] = self.LATM.text()
+        else:
+            self.Error_label.setStyleSheet("color: red;")
+            self.Error_label.setText("SN LATM not correct")
+            self.LATM.setText("")
+            return
+
         print(self.sub_serial)
         self.accept()
     
