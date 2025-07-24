@@ -22,7 +22,7 @@ class SubPartWindow(QDialog):
         
     def Start_clicked(self):
         self.sub_serial = {}
-        if fn_Query("SANNER", "S200A", self.sn, "SN  XCVR") == self.XCVR.text():
+        if fn_Query("SCANNER", "S200A", self.sn, "SN  XCVR") == self.XCVR.text():
             self.sub_serial["SN  XCVR"] = self.XCVR.text()
         else:
             self.Error_label.setStyleSheet("color: red;")
@@ -30,7 +30,7 @@ class SubPartWindow(QDialog):
             self.XCVR.setText("")
             return
         
-        if fn_Query("SANNER", "S200A", self.sn, "SN PCBA") == self.PCBA.text():
+        if fn_Query("SCANNER", "S200A", self.sn, "SN PCBA") == self.PCBA.text():
             self.sub_serial["SN PCBA"] = self.PCBA.text()
         else:
             self.Error_label.setStyleSheet("color: red;")
@@ -38,7 +38,7 @@ class SubPartWindow(QDialog):
             self.PCBA.setText("")
             return
 
-        if fn_Query("SANNER", "S200A", self.sn, "SN Polygon sensor") == self.Poly_Sensor.text():
+        if fn_Query("SCANNER", "S200A", self.sn, "SN Polygon sensor") == self.Poly_Sensor.text():
             self.sub_serial["SN Polygon sensor"] = self.Poly_Sensor.text()
         else:
             self.Error_label.setStyleSheet("color: red;")
@@ -46,7 +46,7 @@ class SubPartWindow(QDialog):
             self.Poly_Sensor.setText("")
             return
 
-        if fn_Query("SANNER", "S300A", self.sn, "SN Polygon (MES Barcode)") == self.Poly_MES.text():
+        if fn_Query("SCANNER", "S300A", self.sn, "SN Polygon (MES Barcode)") == self.Poly_MES.text():
             self.sub_serial["SN Polygon (MES Barcode)"] = self.Poly_MES.text()
         else:
             self.Error_label.setStyleSheet("color: red;")
@@ -54,7 +54,7 @@ class SubPartWindow(QDialog):
             self.Poly_MES.setText("")
             return
 
-        if fn_Query("SANNER", "S400A", self.sn, "SN Fold Mirror") == self.Fold.text():       
+        if fn_Query("SCANNER", "S400A", self.sn, "SN Fold Mirror") == self.Fold.text():       
             self.sub_serial["SN Fold Mirror"] = self.Fold.text()
         else:
             self.Error_label.setStyleSheet("color: red;")
@@ -62,7 +62,7 @@ class SubPartWindow(QDialog):
             self.Fold.setText("")
             return
 
-        if fn_Query("SANNER", "S400A", self.sn, "SN LATM") == self.LATM.text():
+        if fn_Query("SCANNER", "S400A", self.sn, "SN LATM") == self.LATM.text():
             self.sub_serial["SN LATM"] = self.LATM.text()
         else:
             self.Error_label.setStyleSheet("color: red;")

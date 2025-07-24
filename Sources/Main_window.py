@@ -57,7 +57,7 @@ class MainAppWindow(QMainWindow):
         uic.loadUi("C:\Projects\AOI_SCANNER\Sources\GUI\Main_GUI.ui", self)
 
         self.stackedWidget.setCurrentIndex(0)
-        self.LoadWeb.setZoomFactor(0.67)
+        self.LoadWeb.setZoomFactor(0.45)
 
         # action Button 
         self.PassButton.clicked.connect(self.open_result)
@@ -137,7 +137,9 @@ class MainAppWindow(QMainWindow):
         self.mode = self.Instruction.mode
         
         if self.mode == "LOGOUT":
-            return self.logout()
+            print("LOGOUT")
+            self.logout()
+            return
         else:
             sn = self.Instruction.serial_value
             if self.mode.upper() == "PRODUCTION":
@@ -402,12 +404,14 @@ class MainAppWindow(QMainWindow):
                 QMessageBox.critical(self, "Failed uploaded data to FITs", log_status)
                 
         self.Result_images = []
-        PassInstruction = InstructionWindow(index=2)
+        PassInstruction = InstructionWindow(index=1)
         result = PassInstruction.exec()
-        
+        print("Finish")
         if result == QDialog.DialogCode.Accepted:
+            print("True")
             self.start_instruction_flow()
         else:
+            print("False")
             self.start_instruction_flow()
 
         self.setEnabled(True)

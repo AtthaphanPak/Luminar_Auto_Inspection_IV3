@@ -94,5 +94,5 @@ def fn_FitsDebugging():
 
     return output
 
-# status = fn_Query("SCANNER", "S200A", "600643001B2502C2002024", "SN Polygon sensor")
+# status = fn_Query("SCANNER", "S200A", "600643003A2529C2016036", "SN  XCVR")
 # print(status)
