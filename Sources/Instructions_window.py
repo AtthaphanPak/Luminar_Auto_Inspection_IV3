@@ -1,6 +1,8 @@
+# import os
+# import sys
 from PyQt6 import uic
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QDialog, QInputDialog, QComboBox, QMessageBox, QLineEdit
+from PyQt6.QtWidgets import QDialog, QInputDialog, QComboBox, QMessageBox, QLineEdit, QApplication
 from Logic.operation_handler import is_valid_serial
 
 class InstructionWindow(QDialog):
@@ -16,12 +18,12 @@ class InstructionWindow(QDialog):
 
         self.SerialValue.setFocus()
 
-        pixmap_insert = QPixmap(r"C:\Projects\Luminar_Auto_Inspection_IV3\Properties\Insert.jpg")
+        pixmap_insert = QPixmap(r"C:\Projects\AOI_SCANNER\Properties\Insert.jpg")
         self.InsertImg.setPixmap(pixmap_insert)
-        # self.insert_img.setScaledContents(True)
-        pixmap_remove = QPixmap(r"C:\Projects\Luminar_Auto_Inspection_IV3\Properties\Remove.jpg")
+        self.InsertImg.setScaledContents(True)
+        pixmap_remove = QPixmap(r"C:\Projects\AOI_SCANNER\Properties\Remove.jpg")
         self.ActionImg.setPixmap(pixmap_remove)
-        # self.remove_img.setScaledContents(True)
+        self.ActionImg.setScaledContents(True)
 
         self.LogoutButton.clicked.connect(self.logout)
         self.ApplyButton.clicked.connect(self.Insert_clicked)
@@ -56,3 +58,9 @@ class InstructionWindow(QDialog):
 
     def closeEvent(self, event):
         return event.ignore()
+    
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     main_window = InstructionWindow()
+#     main_window.showFullScreen()
+#     sys.exit(app.exec())

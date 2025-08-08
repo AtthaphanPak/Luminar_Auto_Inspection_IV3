@@ -1,5 +1,7 @@
+# import os
+# import sys
 from PyQt6 import uic
-from PyQt6.QtWidgets import QDialog
+from PyQt6.QtWidgets import QDialog, QApplication
 from CloseEvent import ConfirmCloseMixin
 from fitsdll import fn_Query
 
@@ -14,11 +16,14 @@ class SubPartWindow(QDialog):
         self.Poly_Sensor.returnPressed.connect(self.Poly_MES.setFocus)
         self.Poly_MES.returnPressed.connect(self.Fold.setFocus)
         self.Fold.returnPressed.connect(self.LATM.setFocus)
-        self.LATM.returnPressed.connect(self.StartButton.click)
+        # self.LATM.returnPressed.connect(self.StartButton.click)
+
+        self.StartButton.clicked.connect(self.Start_clicked)
         self.LogoutButton.clicked.connect(self.logout)
         print("SubPartWindow")
         
     def Start_clicked(self):
+        print("Start_clicked")
         self.sub_serial = {}
         if fn_Query("SCANNER", "S200A", self.sn, "SN  XCVR") == self.XCVR.text():
             self.sub_serial["SN  XCVR"] = self.XCVR.text()
@@ -77,3 +82,9 @@ class SubPartWindow(QDialog):
         
     def closeEvent(self, event):
         return event.ignore()
+    
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     main_window = SubPartWindow("Serial")
+#     main_window.showFullScreen()
+#     sys.exit(app.exec())
