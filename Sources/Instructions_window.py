@@ -1,4 +1,5 @@
 from PyQt6 import uic
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QDialog, QInputDialog, QComboBox, QMessageBox, QLineEdit
 from Logic.operation_handler import is_valid_serial
 
@@ -14,6 +15,13 @@ class InstructionWindow(QDialog):
         self.stackedWidget.setCurrentIndex(index)
 
         self.SerialValue.setFocus()
+
+        pixmap_insert = QPixmap(r"C:\Projects\Luminar_Auto_Inspection_IV3\Properties\Insert.jpg")
+        self.InsertImg.setPixmap(pixmap_insert)
+        # self.insert_img.setScaledContents(True)
+        pixmap_remove = QPixmap(r"C:\Projects\Luminar_Auto_Inspection_IV3\Properties\Remove.jpg")
+        self.ActionImg.setPixmap(pixmap_remove)
+        # self.remove_img.setScaledContents(True)
 
         self.LogoutButton.clicked.connect(self.logout)
         self.ApplyButton.clicked.connect(self.Insert_clicked)

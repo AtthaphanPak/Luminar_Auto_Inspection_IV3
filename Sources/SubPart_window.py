@@ -15,8 +15,6 @@ class SubPartWindow(QDialog):
         self.Poly_MES.returnPressed.connect(self.Fold.setFocus)
         self.Fold.returnPressed.connect(self.LATM.setFocus)
         self.LATM.returnPressed.connect(self.StartButton.click)
-        
-        self.StartButton.clicked.connect(self.Start_clicked)
         self.LogoutButton.clicked.connect(self.logout)
         print("SubPartWindow")
         
